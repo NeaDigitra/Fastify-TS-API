@@ -14,31 +14,37 @@ A modern REST API built with Fastify and TypeScript.
 ## Quick Start
 
 ### Install dependencies
+
 ```bash
 npm install
 ```
 
 ### Development
+
 ```bash
 npm run dev
 ```
 
 ### Build
+
 ```bash
 npm run build
 ```
 
 ### Production
+
 ```bash
 npm start
 ```
 
 ### Testing
+
 ```bash
 npm test
 ```
 
 ### Linting
+
 ```bash
 npm run lint
 npm run lint:fix
@@ -47,10 +53,12 @@ npm run lint:fix
 ## API Endpoints
 
 ### Health Check
+
 - `GET /api/v1/health` - Basic health check
 - `GET /api/v1/health/ready` - Readiness check
 
 ### Users
+
 - `GET /api/v1/users` - Get all users
 - `GET /api/v1/users/:id` - Get user by ID
 - `POST /api/v1/users` - Create new user

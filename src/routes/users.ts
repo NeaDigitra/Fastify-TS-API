@@ -1,65 +1,112 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  createdAt: string;
-}
-
-const users: User[] = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    createdAt: new Date().toISOString()
-  }
-];
+import { FastifyInstance } from 'fastify';
+import { UserController } from '../controllers/user.controller';
+import {
+  UserSchema,
+  CreateUserSchema,
+  UpdateUserSchema,
+  UserParamsSchema,
+  UserQuerySchema,
+} from '../schemas/user.schema';
+import {
+  ApiResponseSchema,
+  PaginatedResponseSchema,
+  ErrorResponseSchema,
+} from '../schemas/response.schema';
 
 export async function userRoutes(fastify: FastifyInstance) {
-  fastify.get('/users', async (_request: FastifyRequest, _reply: FastifyReply) => {
-    return {
-      data: users,
-      total: users.length
-    };
-  });
+  const userController = new UserController();
 
-  fastify.get<{ Params: { id: string } }>('/users/:id', async (request, reply) => {
-    const { id } = request.params;
-    const user = users.find(u => u.id === parseInt(id));
-    
-    if (!user) {
-      reply.status(404).send({
-        error: 'User not found',
-        message: `User with id ${id} does not exist`
-      });
-      return;
-    }
-    
-    return { data: user };
-  });
+  fastify.get(
+    '/users',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Get all users',
+        description: 'Retrieve a list of all users with optional pagination',
+        querystring: UserQuerySchema,
+        response: {
+          200: PaginatedResponseSchema(UserSchema),
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    userController.getAllUsers
+  );
 
-  fastify.post<{ Body: { name: string; email: string } }>('/users', async (request, reply) => {
-    const { name, email } = request.body;
-    
-    const newUser: User = {
-      id: users.length + 1,
-      name,
-      email,
-      createdAt: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    
-    reply.status(201).send({
-      data: newUser,
-      message: 'User created successfully'
-    });
-  });
+  fastify.get(
+    '/users/:id',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Get user by ID',
+        description: 'Retrieve a specific user by their ID',
+        params: UserParamsSchema,
+        response: {
+          200: ApiResponseSchema(UserSchema),
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    userController.getUserById
+  );
+
+  fastify.post(
+    '/users',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Create new user',
+        description: 'Create a new user with name and email',
+        body: CreateUserSchema,
+        response: {
+          201: ApiResponseSchema(UserSchema),
+          400: ErrorResponseSchema,
+          409: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    userController.createUser
+  );
+
+  fastify.put(
+    '/users/:id',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Update user',
+        description: 'Update an existing user by ID',
+        params: UserParamsSchema,
+        body: UpdateUserSchema,
+        response: {
+          200: ApiResponseSchema(UserSchema),
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    userController.updateUser
+  );
+
+  fastify.delete(
+    '/users/:id',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Delete user',
+        description: 'Delete a user by ID',
+        params: UserParamsSchema,
+        response: {
+          204: {},
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    userController.deleteUser
+  );
 }

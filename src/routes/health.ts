@@ -1,19 +1,46 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
+import { HealthController } from '../controllers/health.controller';
+import {
+  HealthResponseSchema,
+  ReadinessResponseSchema,
+} from '../schemas/health.schema';
+import {
+  ApiResponseSchema,
+  ErrorResponseSchema,
+} from '../schemas/response.schema';
 
 export async function healthRoutes(fastify: FastifyInstance) {
-  fastify.get('/health', async (_request: FastifyRequest, _reply: FastifyReply) => {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      version: process.env.npm_package_version || '1.0.0'
-    };
-  });
+  const healthController = new HealthController();
 
-  fastify.get('/health/ready', async (_request: FastifyRequest, _reply: FastifyReply) => {
-    return {
-      status: 'ready',
-      timestamp: new Date().toISOString()
-    };
-  });
+  fastify.get(
+    '/health',
+    {
+      schema: {
+        tags: ['Health'],
+        summary: 'Health check',
+        description: 'Check API health status',
+        response: {
+          200: ApiResponseSchema(HealthResponseSchema),
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    healthController.getHealth
+  );
+
+  fastify.get(
+    '/health/ready',
+    {
+      schema: {
+        tags: ['Health'],
+        summary: 'Readiness check',
+        description: 'Check API readiness status',
+        response: {
+          200: ApiResponseSchema(ReadinessResponseSchema),
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    healthController.getReadiness
+  );
 }
