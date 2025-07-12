@@ -8,7 +8,8 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { healthRoutes } from './routes/health';
 import { userRoutes } from './routes/users';
 import { errorHandler, requestLogger } from './middleware';
-import { env } from './config';
+import { env, API_CONSTANTS, MESSAGES, interpolateMessage } from './config';
+import { createDIContainer } from './container/container';
 
 const server = fastify({
   logger: {
@@ -30,6 +31,9 @@ const server = fastify({
 
 async function start() {
   try {
+    // Initialize dependency injection container
+    const container = createDIContainer();
+
     server.setErrorHandler(errorHandler);
 
     await server.register(helmet);
@@ -45,10 +49,10 @@ async function start() {
 
     await server.register(swagger, {
       openapi: {
-        openapi: '3.0.0',
+        openapi: API_CONSTANTS.OPENAPI.VERSION,
         info: {
           title: env.APP_NAME,
-          description: 'A modular Fastify TypeScript REST API',
+          description: env.API_DESCRIPTION,
           version: env.APP_VERSION,
         },
         servers: [
@@ -58,8 +62,14 @@ async function start() {
           },
         ],
         tags: [
-          { name: 'Health', description: 'Health check endpoints' },
-          { name: 'Users', description: 'User management endpoints' },
+          {
+            name: API_CONSTANTS.OPENAPI.TAGS.HEALTH,
+            description: MESSAGES.API.HEALTH_TAG_DESCRIPTION,
+          },
+          {
+            name: API_CONSTANTS.OPENAPI.TAGS.USERS,
+            description: MESSAGES.API.USERS_TAG_DESCRIPTION,
+          },
         ],
       },
     });
@@ -74,14 +84,24 @@ async function start() {
 
     server.addHook('preHandler', requestLogger);
 
-    await server.register(healthRoutes, { prefix: env.API_PREFIX });
-    await server.register(userRoutes, { prefix: env.API_PREFIX });
+    await server.register(healthRoutes, {
+      prefix: env.API_PREFIX,
+      container,
+    });
+    await server.register(userRoutes, {
+      prefix: env.API_PREFIX,
+      container,
+    });
 
     const port = env.PORT;
     const host = env.HOST;
 
     await server.listen({ port, host });
-    server.log.info(`🚀 Server ready at http://${host}:${port}`);
+    server.log.info(
+      interpolateMessage(MESSAGES.INFO.SERVER_READY, {
+        url: `http://${host}:${port}`,
+      })
+    );
   } catch (err) {
     server.log.error(err);
     process.exit(1);
@@ -91,13 +111,15 @@ async function start() {
 const signals = ['SIGINT', 'SIGTERM'];
 signals.forEach(signal => {
   process.on(signal, async () => {
-    server.log.info(`Received ${signal}, shutting down gracefully`);
+    server.log.info(
+      interpolateMessage(MESSAGES.INFO.GRACEFUL_SHUTDOWN, { signal })
+    );
     try {
       await server.close();
-      server.log.info('Server closed');
+      server.log.info(MESSAGES.INFO.SERVER_CLOSED);
       process.exit(0);
     } catch (err) {
-      server.log.error('Error during shutdown', err);
+      server.log.error(MESSAGES.INFO.SHUTDOWN_ERROR, err);
       process.exit(1);
     }
   });

@@ -1,5 +1,4 @@
 import { FastifyInstance } from 'fastify';
-import { UserController } from '../controllers/user.controller';
 import {
   UserSchema,
   CreateUserSchema,
@@ -12,17 +11,26 @@ import {
   PaginatedResponseSchema,
   ErrorResponseSchema,
 } from '../schemas/response.schema';
+import { API_CONSTANTS, MESSAGES } from '../config';
+import { AwilixContainer } from 'awilix';
+import { Container } from '../container/container';
 
-export async function userRoutes(fastify: FastifyInstance) {
-  const userController = new UserController();
+export async function userRoutes(
+  fastify: FastifyInstance,
+  options: { container?: any } = {}
+) {
+  const { container } = options as { container?: AwilixContainer<Container> };
+  const userController = container
+    ? container.resolve('userController')
+    : new (await import('../controllers/user.controller')).UserController();
 
   fastify.get(
     '/users',
     {
       schema: {
-        tags: ['Users'],
-        summary: 'Get all users',
-        description: 'Retrieve a list of all users with optional pagination',
+        tags: [API_CONSTANTS.OPENAPI.TAGS.USERS],
+        summary: MESSAGES.API.GET_USERS_SUMMARY,
+        description: MESSAGES.API.GET_USERS_DESCRIPTION,
         querystring: UserQuerySchema,
         response: {
           200: PaginatedResponseSchema(UserSchema),
@@ -38,9 +46,9 @@ export async function userRoutes(fastify: FastifyInstance) {
     '/users/:id',
     {
       schema: {
-        tags: ['Users'],
-        summary: 'Get user by ID',
-        description: 'Retrieve a specific user by their ID',
+        tags: [API_CONSTANTS.OPENAPI.TAGS.USERS],
+        summary: MESSAGES.API.GET_USER_SUMMARY,
+        description: MESSAGES.API.GET_USER_DESCRIPTION,
         params: UserParamsSchema,
         response: {
           200: ApiResponseSchema(UserSchema),
@@ -56,9 +64,9 @@ export async function userRoutes(fastify: FastifyInstance) {
     '/users',
     {
       schema: {
-        tags: ['Users'],
-        summary: 'Create new user',
-        description: 'Create a new user with name and email',
+        tags: [API_CONSTANTS.OPENAPI.TAGS.USERS],
+        summary: MESSAGES.API.CREATE_USER_SUMMARY,
+        description: MESSAGES.API.CREATE_USER_DESCRIPTION,
         body: CreateUserSchema,
         response: {
           201: ApiResponseSchema(UserSchema),
@@ -75,9 +83,9 @@ export async function userRoutes(fastify: FastifyInstance) {
     '/users/:id',
     {
       schema: {
-        tags: ['Users'],
-        summary: 'Update user',
-        description: 'Update an existing user by ID',
+        tags: [API_CONSTANTS.OPENAPI.TAGS.USERS],
+        summary: MESSAGES.API.UPDATE_USER_SUMMARY,
+        description: MESSAGES.API.UPDATE_USER_DESCRIPTION,
         params: UserParamsSchema,
         body: UpdateUserSchema,
         response: {
@@ -96,9 +104,9 @@ export async function userRoutes(fastify: FastifyInstance) {
     '/users/:id',
     {
       schema: {
-        tags: ['Users'],
-        summary: 'Delete user',
-        description: 'Delete a user by ID',
+        tags: [API_CONSTANTS.OPENAPI.TAGS.USERS],
+        summary: MESSAGES.API.DELETE_USER_SUMMARY,
+        description: MESSAGES.API.DELETE_USER_DESCRIPTION,
         params: UserParamsSchema,
         response: {
           204: {},

@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { MESSAGES } from '../config/messages';
 
 export const requestLogger = async (
   request: FastifyRequest,
@@ -14,7 +15,7 @@ export const requestLogger = async (
       userAgent: request.headers['user-agent'],
       ip: request.ip,
     },
-    'Request started'
+    MESSAGES.INFO.REQUEST_STARTED
   );
 
   const originalSend = reply.send.bind(reply);
@@ -29,7 +30,7 @@ export const requestLogger = async (
         statusCode: reply.statusCode,
         responseTime: `${responseTime}ms`,
       },
-      'Request completed'
+      MESSAGES.INFO.REQUEST_COMPLETED
     );
 
     return originalSend(payload);

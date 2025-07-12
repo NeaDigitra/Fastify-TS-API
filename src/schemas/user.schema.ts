@@ -1,20 +1,32 @@
 import { Type, Static } from '@sinclair/typebox';
+import { API_CONSTANTS } from '../config/constants';
 
 export const UserSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
-  name: Type.String({ minLength: 1, maxLength: 100 }),
+  name: Type.String({
+    minLength: API_CONSTANTS.VALIDATION.NAME_MIN_LENGTH,
+    maxLength: API_CONSTANTS.VALIDATION.NAME_MAX_LENGTH,
+  }),
   email: Type.String({ format: 'email' }),
   createdAt: Type.String({ format: 'date-time' }),
   updatedAt: Type.String({ format: 'date-time' }),
 });
 
 export const CreateUserSchema = Type.Object({
-  name: Type.String({ minLength: 1, maxLength: 100 }),
+  name: Type.String({
+    minLength: API_CONSTANTS.VALIDATION.NAME_MIN_LENGTH,
+    maxLength: API_CONSTANTS.VALIDATION.NAME_MAX_LENGTH,
+  }),
   email: Type.String({ format: 'email' }),
 });
 
 export const UpdateUserSchema = Type.Object({
-  name: Type.Optional(Type.String({ minLength: 1, maxLength: 100 })),
+  name: Type.Optional(
+    Type.String({
+      minLength: API_CONSTANTS.VALIDATION.NAME_MIN_LENGTH,
+      maxLength: API_CONSTANTS.VALIDATION.NAME_MAX_LENGTH,
+    })
+  ),
   email: Type.Optional(Type.String({ format: 'email' })),
 });
 
@@ -23,8 +35,16 @@ export const UserParamsSchema = Type.Object({
 });
 
 export const UserQuerySchema = Type.Object({
-  page: Type.Optional(Type.String({ pattern: '^[1-9]\\d*$' })),
-  limit: Type.Optional(Type.String({ pattern: '^[1-9]\\d*$' })),
+  page: Type.Optional(
+    Type.String({
+      pattern: API_CONSTANTS.VALIDATION.POSITIVE_NUMBER_PATTERN,
+    })
+  ),
+  limit: Type.Optional(
+    Type.String({
+      pattern: API_CONSTANTS.VALIDATION.POSITIVE_NUMBER_PATTERN,
+    })
+  ),
 });
 
 export type User = Static<typeof UserSchema>;

@@ -1,6 +1,8 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { AppError } from '../utils/errors';
 import { ResponseUtil } from '../utils/response';
+import { MESSAGES } from '../config/messages';
+import { API_CONSTANTS } from '../config/constants';
 
 export const errorHandler = (
   error: FastifyError,
@@ -31,17 +33,19 @@ export const errorHandler = (
 
   if (error.validation) {
     return reply
-      .status(400)
-      .send(ResponseUtil.error('Validation failed', 'VALIDATION_ERROR'));
+      .status(API_CONSTANTS.HTTP_STATUS.BAD_REQUEST)
+      .send(
+        ResponseUtil.error(MESSAGES.ERROR.VALIDATION_FAILED, 'VALIDATION_ERROR')
+      );
   }
 
-  if (error.statusCode === 429) {
+  if (error.statusCode === API_CONSTANTS.HTTP_STATUS.TOO_MANY_REQUESTS) {
     return reply
-      .status(429)
-      .send(ResponseUtil.error('Rate limit exceeded', 'RATE_LIMITED'));
+      .status(API_CONSTANTS.HTTP_STATUS.TOO_MANY_REQUESTS)
+      .send(ResponseUtil.error(MESSAGES.ERROR.RATE_LIMITED, 'RATE_LIMITED'));
   }
 
   return reply
-    .status(500)
-    .send(ResponseUtil.error('Internal server error', 'INTERNAL_ERROR'));
+    .status(API_CONSTANTS.HTTP_STATUS.INTERNAL_ERROR)
+    .send(ResponseUtil.error(MESSAGES.ERROR.INTERNAL_ERROR, 'INTERNAL_ERROR'));
 };

@@ -8,6 +8,8 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { healthRoutes } from '../../src/routes/health';
 import { userRoutes } from '../../src/routes/users';
 import { errorHandler, requestLogger } from '../../src/middleware';
+import { createDIContainer } from '../../src/container/container';
+import { API_CONSTANTS } from '../../src/config/constants';
 
 export async function createTestServer() {
   const server = fastify({
@@ -26,7 +28,7 @@ export async function createTestServer() {
   });
 
   await server.register(rateLimit, {
-    max: 1000, // Higher limit for tests
+    max: API_CONSTANTS.RATE_LIMITING.TEST_MAX,
     timeWindow: '1 minute',
   });
 
@@ -47,8 +49,17 @@ export async function createTestServer() {
 
   server.addHook('preHandler', requestLogger);
 
-  await server.register(healthRoutes, { prefix: '/api/v1' });
-  await server.register(userRoutes, { prefix: '/api/v1' });
+  // Create DI container for tests
+  const container = createDIContainer();
+
+  await server.register(healthRoutes, {
+    prefix: '/api/v1',
+    container,
+  });
+  await server.register(userRoutes, {
+    prefix: '/api/v1',
+    container,
+  });
 
   return server;
 }

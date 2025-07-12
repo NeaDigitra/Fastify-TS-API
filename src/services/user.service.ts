@@ -1,106 +1,96 @@
 import { User, CreateUserRequest, UpdateUserRequest } from '../types';
 import { NotFoundError, DuplicateResourceError } from '../utils/errors';
-import { IdGenerator } from '../utils/id-generator';
+import { UserRepository } from '../repositories/user.repository';
+import { InMemoryUserRepository } from '../repositories/impl/in-memory-user.repository';
+import { MESSAGES, interpolateMessage } from '../config/messages';
+import { API_CONSTANTS } from '../config/constants';
+import { env } from '../config';
 
 export class UserService {
-  private users: User[] = [
-    {
-      id: IdGenerator.generateUUID(),
-      name: 'John Doe',
-      email: 'john@example.com',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: IdGenerator.generateUUID(),
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+  private userRepository: UserRepository;
+  private messages: typeof MESSAGES;
+  private constants: typeof API_CONSTANTS;
+
+  constructor(
+    userRepository?: UserRepository,
+    messages?: typeof MESSAGES,
+    constants?: typeof API_CONSTANTS
+  ) {
+    this.userRepository = userRepository || new InMemoryUserRepository();
+    this.messages = messages || MESSAGES;
+    this.constants = constants || API_CONSTANTS;
+  }
 
   async getAllUsers(): Promise<User[]> {
-    return this.users;
+    return this.userRepository.findAll();
   }
 
   async getUserById(id: string): Promise<User> {
-    const user = this.users.find(u => u.id === id);
+    const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new NotFoundError(`User with id ${id} not found`);
+      throw new NotFoundError(
+        interpolateMessage(this.messages.ERROR.USER_NOT_FOUND, { id })
+      );
     }
     return user;
   }
 
   async createUser(userData: CreateUserRequest): Promise<User> {
-    const existingUser = this.users.find(u => u.email === userData.email);
-    if (existingUser) {
-      throw new DuplicateResourceError('User with this email already exists');
+    const emailExists = await this.userRepository.emailExists(userData.email);
+    if (emailExists) {
+      throw new DuplicateResourceError(this.messages.ERROR.USER_EMAIL_EXISTS);
     }
 
-    const newUser: User = {
-      id: IdGenerator.generateUUID(),
-      name: userData.name,
-      email: userData.email,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.users.push(newUser);
-    return newUser;
+    return this.userRepository.create(userData);
   }
 
   async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {
-    const userIndex = this.users.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      throw new NotFoundError(`User with id ${id} not found`);
+    const userExists = await this.userRepository.exists(id);
+    if (!userExists) {
+      throw new NotFoundError(
+        interpolateMessage(this.messages.ERROR.USER_NOT_FOUND, { id })
+      );
     }
 
-    const currentUser = this.users[userIndex]!;
-
     if (userData.email) {
-      const existingUser = this.users.find(
-        u => u.email === userData.email && u.id !== id
+      const emailExists = await this.userRepository.emailExists(
+        userData.email,
+        id
       );
-      if (existingUser) {
-        throw new DuplicateResourceError('User with this email already exists');
+      if (emailExists) {
+        throw new DuplicateResourceError(this.messages.ERROR.USER_EMAIL_EXISTS);
       }
     }
 
-    const updatedUser: User = {
-      id: currentUser.id,
-      name: userData.name ?? currentUser.name,
-      email: userData.email ?? currentUser.email,
-      createdAt: currentUser.createdAt,
-      updatedAt: new Date().toISOString(),
-    };
+    const updatedUser = await this.userRepository.update(id, userData);
+    if (!updatedUser) {
+      throw new NotFoundError(
+        interpolateMessage(this.messages.ERROR.USER_NOT_FOUND, { id })
+      );
+    }
 
-    this.users[userIndex] = updatedUser;
     return updatedUser;
   }
 
   async deleteUser(id: string): Promise<void> {
-    const userIndex = this.users.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      throw new NotFoundError(`User with id ${id} not found`);
+    const deleted = await this.userRepository.delete(id);
+    if (!deleted) {
+      throw new NotFoundError(
+        interpolateMessage(this.messages.ERROR.USER_NOT_FOUND, { id })
+      );
     }
-
-    this.users.splice(userIndex, 1);
   }
 
   async getUsersPaginated(
-    page: number = 1,
-    limit: number = 10
+    page: number = env.PAGINATION_DEFAULT_PAGE,
+    limit: number = env.PAGINATION_DEFAULT_LIMIT
   ): Promise<{
     users: User[];
     total: number;
   }> {
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    // Enforce maximum limit
+    const effectiveLimit = Math.min(limit, env.PAGINATION_MAX_LIMIT);
 
-    return {
-      users: this.users.slice(startIndex, endIndex),
-      total: this.users.length,
-    };
+    return this.userRepository.findPaginated(page, effectiveLimit);
   }
 }

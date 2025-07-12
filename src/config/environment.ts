@@ -29,6 +29,26 @@ const envSchema = z.object({
   API_PREFIX: z.string().default('/api/v1'),
   APP_NAME: z.string().default('Fastify TS API'),
   APP_VERSION: z.string().default('1.0.0'),
+  PAGINATION_DEFAULT_PAGE: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().positive())
+    .default(1),
+  PAGINATION_DEFAULT_LIMIT: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().positive())
+    .default(10),
+  PAGINATION_MAX_LIMIT: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().positive())
+    .default(100),
+  ENABLE_SAMPLE_DATA: z
+    .string()
+    .transform(val => val === 'true')
+    .default(true),
+  API_DESCRIPTION: z.string().default('A modular Fastify TypeScript REST API'),
 });
 
 type Environment = z.infer<typeof envSchema>;

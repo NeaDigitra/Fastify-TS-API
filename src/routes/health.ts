@@ -1,5 +1,4 @@
 import { FastifyInstance } from 'fastify';
-import { HealthController } from '../controllers/health.controller';
 import {
   HealthResponseSchema,
   ReadinessResponseSchema,
@@ -8,17 +7,26 @@ import {
   ApiResponseSchema,
   ErrorResponseSchema,
 } from '../schemas/response.schema';
+import { API_CONSTANTS, MESSAGES } from '../config';
+import { AwilixContainer } from 'awilix';
+import { Container } from '../container/container';
 
-export async function healthRoutes(fastify: FastifyInstance) {
-  const healthController = new HealthController();
+export async function healthRoutes(
+  fastify: FastifyInstance,
+  options: { container?: any } = {}
+) {
+  const { container } = options as { container?: AwilixContainer<Container> };
+  const healthController = container
+    ? container.resolve('healthController')
+    : new (await import('../controllers/health.controller')).HealthController();
 
   fastify.get(
     '/health',
     {
       schema: {
-        tags: ['Health'],
-        summary: 'Health check',
-        description: 'Check API health status',
+        tags: [API_CONSTANTS.OPENAPI.TAGS.HEALTH],
+        summary: MESSAGES.API.HEALTH_SUMMARY,
+        description: MESSAGES.API.HEALTH_DESCRIPTION,
         response: {
           200: ApiResponseSchema(HealthResponseSchema),
           500: ErrorResponseSchema,
@@ -32,9 +40,9 @@ export async function healthRoutes(fastify: FastifyInstance) {
     '/health/ready',
     {
       schema: {
-        tags: ['Health'],
-        summary: 'Readiness check',
-        description: 'Check API readiness status',
+        tags: [API_CONSTANTS.OPENAPI.TAGS.HEALTH],
+        summary: MESSAGES.API.READINESS_SUMMARY,
+        description: MESSAGES.API.READINESS_DESCRIPTION,
         response: {
           200: ApiResponseSchema(ReadinessResponseSchema),
           500: ErrorResponseSchema,
