@@ -13,7 +13,7 @@ import { API_CONSTANTS } from '../../src/config/constants';
 
 export async function createTestServer() {
   const server = fastify({
-    logger: false, // Disable logging in tests
+    logger: true, // Enable logging for debugging
     genReqId: () => {
       return Date.now().toString(36) + Math.random().toString(36).substring(2);
     },

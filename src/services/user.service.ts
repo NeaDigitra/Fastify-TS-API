@@ -11,11 +11,15 @@ export class UserService {
   private messages: typeof MESSAGES;
   private constants: typeof API_CONSTANTS;
 
-  constructor(
-    userRepository?: UserRepository,
-    messages?: typeof MESSAGES,
-    constants?: typeof API_CONSTANTS
-  ) {
+  constructor({
+    userRepository,
+    messages,
+    constants,
+  }: {
+    userRepository?: UserRepository;
+    messages?: typeof MESSAGES;
+    constants?: typeof API_CONSTANTS;
+  } = {}) {
     this.userRepository = userRepository || new InMemoryUserRepository();
     this.messages = messages || MESSAGES;
     this.constants = constants || API_CONSTANTS;

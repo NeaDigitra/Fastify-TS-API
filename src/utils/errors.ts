@@ -13,7 +13,7 @@ export class AppError extends Error {
     public message: string,
     public statusCode: number,
     public code: ErrorCode,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -22,7 +22,7 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super(message, 400, ErrorCode.VALIDATION_ERROR, details);
   }
 }

@@ -5,14 +5,18 @@ import { env } from '../config';
 import { MESSAGES } from '../config/messages';
 
 export class HealthController {
-  private messages: typeof MESSAGES;
+  private readonly messagesObj: typeof MESSAGES;
 
-  constructor(messages?: typeof MESSAGES) {
-    this.messages = messages || MESSAGES;
+  constructor({
+    messages,
+  }: {
+    messages?: typeof MESSAGES;
+  } = {}) {
+    this.messagesObj = messages || MESSAGES;
   }
   getHealth = async (_request: FastifyRequest, reply: FastifyReply) => {
     const health: HealthResponse = {
-      status: this.messages.HEALTH.STATUS_OK as 'ok',
+      status: this.messagesObj.HEALTH.STATUS_OK as 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       version: env.APP_VERSION,
@@ -24,10 +28,10 @@ export class HealthController {
 
   getReadiness = async (_request: FastifyRequest, reply: FastifyReply) => {
     const readiness = {
-      status: this.messages.HEALTH.STATUS_READY,
+      status: this.messagesObj.HEALTH.STATUS_READY,
       timestamp: new Date().toISOString(),
       services: {
-        api: this.messages.HEALTH.SERVICE_OPERATIONAL,
+        api: this.messagesObj.HEALTH.SERVICE_OPERATIONAL,
       },
     };
 

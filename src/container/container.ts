@@ -24,7 +24,7 @@ export interface Container {
 
 export function createDIContainer(): AwilixContainer<Container> {
   const container = createContainer<Container>({
-    injectionMode: InjectionMode.PROXY,
+    injectionMode: InjectionMode.CLASSIC,
   });
 
   // Register constants and config

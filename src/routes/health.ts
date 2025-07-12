@@ -13,7 +13,7 @@ import { Container } from '../container/container';
 
 export async function healthRoutes(
   fastify: FastifyInstance,
-  options: { container?: any } = {}
+  options: { container?: AwilixContainer<Container> } = {}
 ) {
   const { container } = options as { container?: AwilixContainer<Container> };
   const healthController = container

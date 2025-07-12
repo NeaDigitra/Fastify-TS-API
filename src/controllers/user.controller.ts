@@ -8,17 +8,21 @@ import { env } from '../config';
 
 export class UserController {
   private userService: UserService;
-  private messages: typeof MESSAGES;
-  private constants: typeof API_CONSTANTS;
+  private readonly messagesObj: typeof MESSAGES;
+  private readonly constantsObj: typeof API_CONSTANTS;
 
-  constructor(
-    userService?: UserService,
-    messages?: typeof MESSAGES,
-    constants?: typeof API_CONSTANTS
-  ) {
+  constructor({
+    userService,
+    messages,
+    constants,
+  }: {
+    userService?: UserService;
+    messages?: typeof MESSAGES;
+    constants?: typeof API_CONSTANTS;
+  } = {}) {
     this.userService = userService || new UserService();
-    this.messages = messages || MESSAGES;
-    this.constants = constants || API_CONSTANTS;
+    this.messagesObj = messages || MESSAGES;
+    this.constantsObj = constants || API_CONSTANTS;
   }
 
   getAllUsers = async (
@@ -60,8 +64,8 @@ export class UserController {
   ) => {
     const user = await this.userService.createUser(request.body);
     return reply
-      .status(this.constants.HTTP_STATUS.CREATED)
-      .send(ResponseUtil.success(user, this.messages.SUCCESS.USER_CREATED));
+      .status(this.constantsObj.HTTP_STATUS.CREATED)
+      .send(ResponseUtil.success(user, this.messagesObj.SUCCESS.USER_CREATED));
   };
 
   updateUser = async (
@@ -74,7 +78,7 @@ export class UserController {
     const { id } = request.params;
     const user = await this.userService.updateUser(id, request.body);
     return reply.send(
-      ResponseUtil.success(user, this.messages.SUCCESS.USER_UPDATED)
+      ResponseUtil.success(user, this.messagesObj.SUCCESS.USER_UPDATED)
     );
   };
 
@@ -84,6 +88,6 @@ export class UserController {
   ) => {
     const { id } = request.params;
     await this.userService.deleteUser(id);
-    return reply.status(this.constants.HTTP_STATUS.NO_CONTENT).send();
+    return reply.status(this.constantsObj.HTTP_STATUS.NO_CONTENT).send();
   };
 }
